@@ -18,4 +18,6 @@ public:
 		static int Text(string inFilePath, string outFilePath, string decKey);
 		static int Binary(string inFilePath, string outFilePath, string decKey);
 	};
+private:
+	static void Progress(size_t nowSize, size_t maxSize);
 };

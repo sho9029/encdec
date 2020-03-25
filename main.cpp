@@ -52,7 +52,11 @@ int main()
 	catch (exception & e)
 	{
 		cout << endl << e.what();
+		system("pause");
+		return -1;
 	}
 
+	cout << str << "が終了しました";
+	system("pause");
 	return 0;
 }

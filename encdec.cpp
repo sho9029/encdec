@@ -1,6 +1,6 @@
 #include "encdec.h"
 
-constexpr auto EXCEPTION_ENCRYPTION = "ファイルが出力できません。";;
+const size_t splitSize = 50000000;//50MB
 
 int encdec::Encryption::Text(string inFilePath, string outFilePath, string encKey)
 {
@@ -44,30 +44,48 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 	conv::StringToBinary(encKey);
 	ifstream in(inFilePath, ios::binary);
 	if (!in) throw new exception("ファイルを開けませんでした");
+	size_t fileSize = in.seekg(0, ios::end).tellg();
+	in.clear();
+	in.seekg(0, ios::beg);
+	ofstream out(outFilePath, ios::trunc | ios::binary);
+	if (!out) throw new exception("ファイルを出力できませんでした");
+	auto [spEncKeyBuf, encKeyMaxIndex] = conv::split(encKey, 2);
 	uint8_t a;
-	vector<uint8_t> b;
-	auto [spEncKey, encKeyMaxIndex] = conv::split(encKey, 2);
+	vector<uint8_t> b, spEncKey;
 	size_t i = 0;
+
+	for (auto f : spEncKeyBuf) spEncKey.push_back(conv::stoi(f));
 
 	while (!in.eof())
 	{
 		in.read((char*)&a, 1);
 		if (in.eof()) break;
 		
-		a ^= conv::stoi(spEncKey[i % encKeyMaxIndex]);
+		a ^= spEncKey[i % encKeyMaxIndex];
 		i++;
 		b.push_back(a);
+
+		if (i % splitSize == 0 && splitSize <= i)
+		{
+			for (unsigned long long j = 0; j < splitSize; j++)
+			{
+				out.write((char*)&b[j], 1);
+			}
+
+			b.clear();
+			b.shrink_to_fit();
+			Progress(i, fileSize);
+		}
 	}
 
 	in.close();
-	ofstream out(outFilePath, ios::trunc | ios::binary);
-	if (!out) throw new exception("ファイルを出力できませんでした");
 
-	for (auto f : b)
+	for (unsigned long long j = 0; j < b.size(); j++)
 	{
-		out.write((char*)&f, 1);
+		out.write((char*)&b[j], 1);
 	}
 
+	Progress(i, fileSize);
 	out.close();
 	return 0;
 }
@@ -114,30 +132,58 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 	conv::StringToBinary(decKey);
 	ifstream in(inFilePath, ios::binary);
 	if (!in) throw new exception("ファイルを開けませんでした");
+	size_t fileSize = in.seekg(0, ios::end).tellg();
+	in.clear();
+	in.seekg(0, ios::beg);
+	ofstream out(outFilePath, ios::trunc | ios::binary);
+	if (!out) throw new exception("ファイルを出力できませんでした");
+	auto [spDecKeyBuf, decKeyMaxIndex] = conv::split(decKey, 2);
 	uint8_t a;
-	vector<uint8_t> b;
-	auto [spdecKey, decKeyMaxIndex] = conv::split(decKey, 2);
+	vector<uint8_t> b, spDecKey;
 	size_t i = 0;
+
+	for (auto f : spDecKeyBuf) spDecKey.push_back(conv::stoi(f));
 
 	while (!in.eof())
 	{
 		in.read((char*)&a, 1);
 		if (in.eof()) break;
 
-		a ^= conv::stoi(spdecKey[i % decKeyMaxIndex]);
+		a ^= spDecKey[i % decKeyMaxIndex];
 		i++;
 		b.push_back(a);
+
+		if (i % splitSize == 0 && splitSize <= i)
+		{
+			for (unsigned long long j = 0; j < splitSize; j++)
+			{
+				out.write((char*)&b[j], 1);
+			}
+
+			b.clear();
+			b.shrink_to_fit();
+			Progress(i, fileSize);
+		}
 	}
 
 	in.close();
-	ofstream out(outFilePath, ios::trunc | ios::binary);
-	if (!out) throw new exception("ファイルを出力できませんでした");
 
-	for (auto f : b)
+	for (unsigned long long j = 0; j < b.size(); j++)
 	{
-		out.write((char*)&f, 1);
+		out.write((char*)&b[j], 1);
 	}
 
+	Progress(i, fileSize);
 	out.close();
 	return 0;
+}
+
+void encdec::Progress(size_t nowSize, size_t maxSize)
+{
+	cout << "\r" << flush;
+	if (maxSize < 1000000) cout << nowSize << "B / " << maxSize << "B";
+	else if (maxSize < 1000000000) cout << nowSize / 1000 << "KB / " << maxSize / 1000 << "KB";
+	else if (maxSize < 1000000000000) cout << nowSize / 1000000 << "MB / " << maxSize / 1000000 << "MB";
+	else cout << nowSize / 1000000000 << "GB / " << maxSize / 1000000000 << "GB";
+	return;
 }
