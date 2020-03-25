@@ -56,7 +56,7 @@ int main()
 		return -1;
 	}
 
-	cout << str << "が終了しました";
+	cout << endl << str << "が終了しました" << endl;
 	system("pause");
 	return 0;
 }

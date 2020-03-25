@@ -1,6 +1,6 @@
 #include "encdec.h"
 
-const size_t splitSize = 50000000;//50MB
+const size_t splitSize = 100000000;//100MB
 
 int encdec::Encryption::Text(string inFilePath, string outFilePath, string encKey)
 {
@@ -53,8 +53,8 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 	uint8_t a;
 	vector<uint8_t> b, spEncKey;
 	size_t i = 0;
-
 	for (auto f : spEncKeyBuf) spEncKey.push_back(conv::stoi(f));
+	Progress(i, fileSize);
 
 	while (!in.eof())
 	{
@@ -141,8 +141,8 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 	uint8_t a;
 	vector<uint8_t> b, spDecKey;
 	size_t i = 0;
-
 	for (auto f : spDecKeyBuf) spDecKey.push_back(conv::stoi(f));
+	Progress(i, fileSize);
 
 	while (!in.eof())
 	{
