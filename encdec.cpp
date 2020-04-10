@@ -1,6 +1,6 @@
 #include "encdec.h"
 
-const size_t splitSize = 100000000;//100MB
+size_t splitSize = 100000000;//100MB
 
 int encdec::Encryption::Text(string inFilePath, string outFilePath, string encKey)
 {
@@ -41,6 +41,12 @@ int encdec::Encryption::Text(string inFilePath, string outFilePath, string encKe
 
 int encdec::Encryption::Binary(string inFilePath, string outFilePath, string encKey)
 {
+	MEMORYSTATUSEX memoryBuf;
+	memoryBuf.dwLength = sizeof(memoryBuf);
+	GlobalMemoryStatusEx(&memoryBuf);
+	auto memoryFreeSize = memoryBuf.ullAvailPhys;
+	if (memoryFreeSize <= splitSize) splitSize = memoryFreeSize * 0.8;
+
 	conv::StringToBinary(encKey);
 	ifstream in(inFilePath, ios::binary);
 	if (!in) throw new exception("ファイルを開けませんでした");
@@ -53,7 +59,7 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 	uint8_t a;
 	vector<uint8_t> b, spEncKey;
 	size_t i = 0;
-	for (auto f : spEncKeyBuf) spEncKey.push_back(conv::stoi(f));
+	for (auto f : spEncKeyBuf) spEncKey.emplace_back(conv::stoi(f));
 	Progress(i, fileSize);
 	if (splitSize <= fileSize) b.reserve(splitSize);
 
@@ -64,7 +70,7 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 		
 		a ^= spEncKey[i % encKeyMaxIndex];
 		i++;
-		b.push_back(a);
+		b.emplace_back(a);
 
 		if (i % splitSize == 0 && splitSize <= i)
 		{
@@ -129,6 +135,12 @@ int encdec::Decryption::Text(string inFilePath, string outFilePath, string decKe
 
 int encdec::Decryption::Binary(string inFilePath, string outFilePath, string decKey)
 {
+	MEMORYSTATUSEX memoryBuf;
+	memoryBuf.dwLength = sizeof(memoryBuf);
+	GlobalMemoryStatusEx(&memoryBuf);
+	auto memoryFreeSize = memoryBuf.ullAvailPhys;
+	if (memoryFreeSize <= splitSize) splitSize = memoryFreeSize * 0.8;
+
 	conv::StringToBinary(decKey);
 	ifstream in(inFilePath, ios::binary);
 	if (!in) throw new exception("ファイルを開けませんでした");
@@ -141,7 +153,7 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 	uint8_t a;
 	vector<uint8_t> b, spDecKey;
 	size_t i = 0;
-	for (auto f : spDecKeyBuf) spDecKey.push_back(conv::stoi(f));
+	for (auto f : spDecKeyBuf) spDecKey.emplace_back(conv::stoi(f));
 	Progress(i, fileSize);
 	if (splitSize <= fileSize) b.reserve(splitSize);
 
@@ -152,7 +164,7 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 
 		a ^= spDecKey[i % decKeyMaxIndex];
 		i++;
-		b.push_back(a);
+		b.emplace_back(a);
 
 		if (i % splitSize == 0 && splitSize <= i)
 		{
@@ -178,12 +190,12 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 	return 0;
 }
 
-void encdec::Progress(size_t nowSize, size_t maxSize)
+void encdec::Progress(const size_t& nowSize, const size_t& maxSize)
 {
 	cout << "\r" << flush;
 	if (maxSize < 1000000) cout << nowSize << "B / " << maxSize << "B";
-	else if (maxSize < 1000000000) cout << nowSize / 1000 << "KB / " << maxSize / 1000 << "KB";
-	else if (maxSize < 1000000000000) cout << nowSize / 1000000 << "MB / " << maxSize / 1000000 << "MB";
+	else if (maxSize < 10000000) cout << nowSize / 1000 << "KB / " << maxSize / 1000 << "KB";
+	else if (maxSize < 10000000000) cout << nowSize / 1000000 << "MB / " << maxSize / 1000000 << "MB";
 	else cout << nowSize / 1000000000 << "GB / " << maxSize / 1000000000 << "GB";
 	return;
 }

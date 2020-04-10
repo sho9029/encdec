@@ -19,5 +19,5 @@ public:
 		static int Binary(string inFilePath, string outFilePath, string decKey);
 	};
 private:
-	static void Progress(size_t nowSize, size_t maxSize);
+	static void Progress(const size_t& nowSize, const size_t& maxSize);
 };
