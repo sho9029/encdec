@@ -145,12 +145,24 @@ uint8_t conv::stoi(const string& a)
 	return z;
 }
 
+uint1024_t conv::stoi1024(const string& a)
+{
+	uint1024_t z = 0;
+
+	for (auto f : a)
+	{
+		z = 10 * z + (f = '0');
+	}
+
+	return z;
+}
+
 tuple<vector<string>, unsigned long long> conv::split(const string& a, const unsigned long long& b)
 {
 	vector<string> z;
 	string buf;
 
-	for (unsigned long long i = 0; i < a.size(); i += b)
+	for (unsigned long long i = 0, size = a.size(); i < size; i += b)
 	{
 		buf = "";
 

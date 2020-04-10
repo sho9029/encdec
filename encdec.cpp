@@ -55,6 +55,7 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 	size_t i = 0;
 	for (auto f : spEncKeyBuf) spEncKey.push_back(conv::stoi(f));
 	Progress(i, fileSize);
+	if (splitSize <= fileSize) b.reserve(splitSize);
 
 	while (!in.eof())
 	{
@@ -67,20 +68,19 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 
 		if (i % splitSize == 0 && splitSize <= i)
 		{
-			for (unsigned long long j = 0; j < splitSize; j++)
+			for (size_t j = 0; j < splitSize; j++)
 			{
 				out.write((char*)&b[j], 1);
 			}
 
 			b.clear();
-			b.shrink_to_fit();
 			Progress(i, fileSize);
 		}
 	}
 
 	in.close();
 
-	for (unsigned long long j = 0; j < b.size(); j++)
+	for (size_t j = 0, size = b.size(); j < size; j++)
 	{
 		out.write((char*)&b[j], 1);
 	}
@@ -143,6 +143,7 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 	size_t i = 0;
 	for (auto f : spDecKeyBuf) spDecKey.push_back(conv::stoi(f));
 	Progress(i, fileSize);
+	if (splitSize <= fileSize) b.reserve(splitSize);
 
 	while (!in.eof())
 	{
@@ -155,20 +156,19 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 
 		if (i % splitSize == 0 && splitSize <= i)
 		{
-			for (unsigned long long j = 0; j < splitSize; j++)
+			for (size_t j = 0; j < splitSize; j++)
 			{
 				out.write((char*)&b[j], 1);
 			}
 
 			b.clear();
-			b.shrink_to_fit();
 			Progress(i, fileSize);
 		}
 	}
 
 	in.close();
 
-	for (unsigned long long j = 0; j < b.size(); j++)
+	for (size_t j = 0; j < b.size(); j++)
 	{
 		out.write((char*)&b[j], 1);
 	}

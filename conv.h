@@ -7,6 +7,7 @@ public:
 	static void StringToBinary(string&);
 	static void BinaryToString(string&);
 	static uint8_t stoi(const string&);
+	static uint1024_t stoi1024(const string&);
 	static tuple<vector<string>, unsigned long long> split(const string&, const unsigned long long&);
 private:
 	static string DecimalToBinary(const vector<int>&);
