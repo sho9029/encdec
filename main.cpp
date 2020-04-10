@@ -22,31 +22,32 @@ int main()
 	{
 		cout << str << "\n\nテキストファイル = 0 バイナリファイル = 1" << endl;
 		cin >> b;
-
+		string _;
+		getline(cin, _);//cin >> b での改行にgetlineが反応するため破棄
 		system("cls");
 		if (b == 0 || b == 1) break;
 	}
 
-	string inFilePath, outFilePath, Key;
+	string inFilePath, outFilePath, key;
 	cout << str << "するファイルパス > ";
-	cin >> inFilePath;
+	getline(cin, inFilePath);
 	cout << "出力するファイルパス > ";
-	cin >> outFilePath;
+	getline(cin, outFilePath);
 	cout << str << "キー > ";
-	cin >> Key;
+	cin >> key;
 
 	try
 	{
 		if (a == 0)
 		{
-			if (b == 0) encdec::Encryption::Text(inFilePath, outFilePath, Key);
-			else encdec::Encryption::Binary(inFilePath, outFilePath, Key);
+			if (b == 0) encdec::Encryption::Text(inFilePath, outFilePath, key);
+			else encdec::Encryption::Binary(inFilePath, outFilePath, key);
 		}
 
 		if (a == 1)
 		{
-			if (b == 0) encdec::Decryption::Text(inFilePath, outFilePath, Key);
-			else encdec::Decryption::Binary(inFilePath, outFilePath, Key);
+			if (b == 0) encdec::Decryption::Text(inFilePath, outFilePath, key);
+			else encdec::Decryption::Binary(inFilePath, outFilePath, key);
 		}
 	}
 	catch (exception & e)

@@ -55,7 +55,7 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 	in.seekg(0, ios::beg);
 	ofstream out(outFilePath, ios::trunc | ios::binary);
 	if (!out) throw new exception("ファイルを出力できませんでした");
-	auto [spEncKeyBuf, encKeyMaxIndex] = conv::split(encKey, 2);
+	auto [spEncKeyBuf, spEncKeySize] = conv::split(encKey, 2);
 	uint8_t a;
 	vector<uint8_t> b, spEncKey;
 	size_t i = 0;
@@ -68,7 +68,7 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 		in.read((char*)&a, 1);
 		if (in.eof()) break;
 		
-		a ^= spEncKey[i % encKeyMaxIndex];
+		a ^= spEncKey[i % spEncKeySize];
 		i++;
 		b.emplace_back(a);
 
@@ -149,7 +149,7 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 	in.seekg(0, ios::beg);
 	ofstream out(outFilePath, ios::trunc | ios::binary);
 	if (!out) throw new exception("ファイルを出力できませんでした");
-	auto [spDecKeyBuf, decKeyMaxIndex] = conv::split(decKey, 2);
+	auto [spDecKeyBuf, spDecKeySize] = conv::split(decKey, 2);
 	uint8_t a;
 	vector<uint8_t> b, spDecKey;
 	size_t i = 0;
@@ -162,7 +162,7 @@ int encdec::Decryption::Binary(string inFilePath, string outFilePath, string dec
 		in.read((char*)&a, 1);
 		if (in.eof()) break;
 
-		a ^= spDecKey[i % decKeyMaxIndex];
+		a ^= spDecKey[i % spDecKeySize];
 		i++;
 		b.emplace_back(a);
 

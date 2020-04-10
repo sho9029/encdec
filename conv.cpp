@@ -174,7 +174,7 @@ tuple<vector<string>, unsigned long long> conv::split(const string& a, const uns
 		z.emplace_back(buf);
 	}
 
-	return { z, z.size() - 1 };
+	return { z, z.size()};
 }
 
 string conv::DecimalToBinary(const vector<int>& a)
