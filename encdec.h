@@ -9,13 +9,11 @@ public:
 	class Encryption
 	{
 	public:
-		static int Text(string inFilePath, string outFilePath, string encKey);
 		static int Binary(string inFilePath, string outFilePath, string encKey);
 	};
 	class Decryption
 	{
 	public:
-		static int Text(string inFilePath, string outFilePath, string decKey);
 		static int Binary(string inFilePath, string outFilePath, string decKey);
 	};
 private:

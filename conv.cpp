@@ -106,33 +106,6 @@ void conv::StringToBinary(string& a)
 	a = DecimalToBinary(z);
 }
 
-void conv::BinaryToString(string& a)
-{
-	string z = "";
-	char str[95] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
-				  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-				  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-				  '!', '"', '#', '$', '%', '&', '(', ')', '-', '=', '^', '~', '|', '@', '`', '[', '{', ';', '+', ':', '*', ']', '}', ',', '<', '.',
-				  '>', '/', '?', '_', ' ', '\n', '\t' };
-	
-	for (size_t i = 0; i < a.size(); i += 7)
-	{
-		size_t temp = 0;
-
-		for (size_t j = 0; j < 7; j++)
-		{
-			if (a[i + j] == '1')
-			{
-				temp += static_cast<size_t>(pow(2, 6 - j));
-			}
-		}
-
-		z += str[temp];
-	}
-
-	a = z;
-}
-
 uint8_t conv::stoi(const string& a)
 {
 	uint8_t z = 0;
@@ -140,18 +113,6 @@ uint8_t conv::stoi(const string& a)
 	for (auto f : a)
 	{
 		z = 10 * z + (f - '0');
-	}
-
-	return z;
-}
-
-uint1024_t conv::stoi1024(const string& a)
-{
-	uint1024_t z = 0;
-
-	for (auto f : a)
-	{
-		z = 10 * z + (f = '0');
 	}
 
 	return z;

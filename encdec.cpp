@@ -2,43 +2,6 @@
 
 size_t splitSize = 100000000;//100MB
 
-int encdec::Encryption::Text(string inFilePath, string outFilePath, string encKey)
-{
-	ifstream in(inFilePath);
-	if (!in) throw new exception("ファイルを開けませんでした");
-	stringstream ss;
-	ss << in.rdbuf();
-	in.close();
-	string str(ss.str());
-	conv::StringToBinary(str);
-	conv::StringToBinary(encKey);
-
-	if (str.size() != encKey.size())
-	{
-		size_t k = encKey.size();
-
-		while (k < str.size())
-		{
-			encKey += encKey;
-			k = encKey.size();
-		}
-		while (str.size() < k)
-		{
-			encKey.erase(encKey.end() - 1);
-			k = encKey.size();
-		}
-	}
-	
-	str = StringBitOperator::Xor(str, encKey);
-
-	ofstream out(outFilePath, ios::trunc);
-	if (!out) throw new exception("ファイルを出力できませんでした");
-	out << str;
-	out.close();
-
-	return 0;
-}
-
 int encdec::Encryption::Binary(string inFilePath, string outFilePath, string encKey)
 {
 	MEMORYSTATUSEX memoryBuf;
@@ -92,43 +55,6 @@ int encdec::Encryption::Binary(string inFilePath, string outFilePath, string enc
 	}
 
 	Progress(i, fileSize);
-	out.close();
-	return 0;
-}
-
-int encdec::Decryption::Text(string inFilePath, string outFilePath, string decKey)
-{
-	ifstream in(inFilePath);
-	if (!in) throw new exception("ファイルを開けませんでした");
-	stringstream ss;
-	ss << in.rdbuf();
-	in.close();
-	string str(ss.str());
-	conv::StringToBinary(decKey);
-
-	if (str.size() != decKey.size())
-	{
-		size_t k = decKey.size();
-
-		while (k < str.size())
-		{
-			decKey += decKey;
-			k = decKey.size();
-		}
-		while (str.size() < k)
-		{
-			decKey.erase(decKey.end() - 1);
-			k = decKey.size();
-		}
-	}
-
-	str = StringBitOperator::Xor(str, decKey);
-
-	conv::BinaryToString(str);
-
-	ofstream out(outFilePath, ios::trunc);
-	if (!out) throw new exception("ファイルを出力できませんでした");
-	out << str;
 	out.close();
 	return 0;
 }
