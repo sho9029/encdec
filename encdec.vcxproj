@@ -22,11 +22,13 @@
     <ClCompile Include="conv.cpp" />
     <ClCompile Include="encdec.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="random.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="conv.h" />
     <ClInclude Include="encdec.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="random.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
