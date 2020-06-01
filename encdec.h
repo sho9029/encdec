@@ -7,8 +7,7 @@
 class encdec
 {
 public:
-    static int Encryption(string inFilePath, string outFilePath, string encKey);
-    static int Decryption(string inFilePath, string outFilePath, string decKey);
+    static int Convert(string inFilePath, string outFilePath, string key);
 private:
     inline static size_t splitSize = 100000000;
     static void Progress(const size_t& nowSize, const size_t& maxSize);

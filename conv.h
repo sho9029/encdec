@@ -5,7 +5,6 @@ class conv
 {
 public:
     static void StringToBinary(string&);
-    static uint8_t StringToDecimal(const string&);
     static uint8_t stoi(const string&);
     static tuple<vector<string>, unsigned long long> split(const string&, const unsigned long long&);
 private:

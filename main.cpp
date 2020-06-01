@@ -1,41 +1,51 @@
 ﻿#include "pch.h"
 #include "encdec.h"
 
+enum selectPos
+{
+    up,
+    down
+};
+
 int main()
 {
-    string a, str;
+    string mode;
+    int pos = up;
+
+    cout << "暗号化 <\n復号    ";
 
     while (1)
     {
-        cout << "暗号化 = 0 複合 = 1" << endl;
-        getline(cin, a);
-
-        system("cls");
-        if (a == "0" || a == "1") break;
+        if (GetAsyncKeyState(VK_RETURN)) break;
+        if (GetAsyncKeyState(VK_UP) && pos == down)
+        {
+            system("cls");
+            cout << "暗号化 <\n復号    ";
+            pos = up;
+        }
+        else if (GetAsyncKeyState(VK_DOWN) && pos == up)
+        {
+            system("cls");
+            cout << "暗号化\n復号   <";
+            pos = down;
+        }
     }
 
-    if (a == "0") str = "暗号化";
-    else str = "復号";
+    if (pos == up) mode = "暗号化";
+    else mode = "復号";
 
-    string inFilePath, outFilePath, key;
-    cout << str << "するファイルパス > ";
+    string inFilePath, outFilePath, key, _;
+    getline(cin, _);
+    cout << endl << mode << "するファイルパス > ";
     getline(cin, inFilePath);
     cout << "出力するファイルパス > ";
     getline(cin, outFilePath);
-    cout << str << "キー > ";
+    cout << mode << "キー > ";
     cin >> key;
 
     try
     {
-        if (a == "0")
-        {
-            encdec::Encryption(inFilePath, outFilePath, key);
-        }
-
-        if (a == "1")
-        {
-            encdec::Decryption(inFilePath, outFilePath, key);
-        }
+        encdec::Convert(inFilePath, outFilePath, key);
     }
     catch (exception & e)
     {
@@ -44,7 +54,7 @@ int main()
         return -1;
     }
 
-    cout << endl << str << "が終了しました" << endl;
+    cout << endl << mode << "が終了しました" << endl;
     system("pause");
     return 0;
 }
