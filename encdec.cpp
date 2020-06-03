@@ -15,13 +15,11 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     //キーをシードに疑似乱数生成
     key = random::rand(key);
     ifstream in(inFilePath, ios::binary);
-    if (!in) throw new exception("ファイルを開けませんでした");
+    if (!in) throw exception("ファイルを開けませんでした");
     //ファイルサイズ取得
     size_t fileSize = in.seekg(0, ios::end).tellg();
     in.clear();
     in.seekg(0, ios::beg);
-    ofstream out(outFilePath, ios::trunc | ios::binary);
-    if (!out) throw new exception("ファイルを出力できませんでした");
     //1バイトごとにキーを分割
     auto [spkeyBuf, spkeySize] = conv::split(key, 2);
     uint8_t a;
@@ -32,18 +30,52 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     Progress(i, fileSize);
     if (splitSize <= fileSize) b.reserve(splitSize);
 
+    //ヘッダーの確認
+    header::_header h;
+    in.read((char*)&h, sizeof(h));
+
+    int result;
+    if (h.identifier[0] == IDENTIFIER[0]
+        && h.identifier[1] == IDENTIFIER[1]
+        && h.identifier[2] == IDENTIFIER[2])
+    {
+        if (h.version[0] == VERSION[0]
+            && h.version[1] == VERSION[1])
+            result = header::allMatch;
+        else
+            result = header::identifierMatch;
+    }
+    else
+        result = header::noMatch;
+
+    if (result == header::identifierMatch)
+        throw exception("バージョンが違います");
+    else if (result != header::allMatch && result != header::noMatch)
+        throw exception("不明なエラー");
+
+    ofstream out(outFilePath, ios::trunc | ios::binary);
+    if (!out) throw exception("ファイルを出力できませんでした");
+
+    if (result == header::noMatch)
+    {
+        in.clear();
+        in.seekg(0, ios::beg);
+        HeaderWrite(h);
+        out.write((char*)&h, sizeof(h));
+    }
+
     while (!in.eof())
     {
         in.read((char*)&a, 1);
         if (in.eof()) break;
         
         a ^= spkey[i % spkeySize];
-        i++;
+        ++i;
         b.emplace_back(a);
 
         if (i % splitSize == 0 && splitSize <= i)
         {
-            for (size_t j = 0; j < splitSize; j++)
+            for (size_t j = 0; j < splitSize; ++j)
             {
                 out.write((char*)&b[j], 1);
             }
@@ -55,7 +87,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
 
     in.close();
 
-    for (size_t j = 0, size = b.size(); j < size; j++)
+    for (size_t j = 0, size = b.size(); j < size; ++j)
     {
         out.write((char*)&b[j], 1);
     }
@@ -76,5 +108,15 @@ void encdec::Progress(const size_t& nowSize, const size_t& maxSize)
         cout << nowSize / 1000000 << "MB / " << maxSize / 1000000 << "MB";
     else
         cout << nowSize / 1000000000 << "GB / " << maxSize / 1000000000 << "GB";
+    return;
+}
+
+void encdec::HeaderWrite(header::_header& h)
+{
+    h.identifier[0] = IDENTIFIER[0];
+    h.identifier[1] = IDENTIFIER[1];
+    h.identifier[2] = IDENTIFIER[2];
+    h.version[0] = VERSION[0];
+    h.version[1] = VERSION[1];
     return;
 }

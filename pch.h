@@ -104,3 +104,13 @@ constexpr auto VID_SPACE = 185;
 constexpr auto VID_ES_N = 187;
 constexpr auto VID_ES_T = 189;
 constexpr auto VID_UNDEFINED = 191;
+
+//identifier
+constexpr size_t identifierSize = 3;
+constexpr uint8_t IDENTIFIER[identifierSize]= { 0x45, 0x44, 0xff };
+
+//version
+constexpr size_t versionSize = 2;
+constexpr uint8_t ALGORITHM = 1;
+constexpr uint8_t MAJOR = 2;
+constexpr uint8_t VERSION[versionSize] = { ALGORITHM, MAJOR };

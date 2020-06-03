@@ -27,6 +27,7 @@
   <ItemGroup>
     <ClInclude Include="conv.h" />
     <ClInclude Include="encdec.h" />
+    <ClInclude Include="header.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="random.h" />
   </ItemGroup>
