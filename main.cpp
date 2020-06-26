@@ -20,10 +20,40 @@ int main(int argc, char **argv)
     vector<string> args(argv, argv + argc);
     int pos = up;
 
-    if (argc == 2 && (argv[1] == "--help" || argv[1] == "help" || argv[1] == "?"))
+    if (argc == 2 && (args[1] == "--help" || args[1] == "help" || args[1] == "?"))
     {
         cout << "\nUsage: encdec.exe [-i input file path] [-o output file path] [-k key]"
                 "\n\nor run without arguments";
+    }
+    else if (argc == 2)
+    {
+        inFilePath = args[1];
+        cout << "暗号化 <\n復号    ";
+
+        while (1)
+        {
+            if (GetAsyncKeyState(VK_RETURN)) break;
+            if (GetAsyncKeyState(VK_UP) && pos == down)
+            {
+                system("cls");
+                cout << "暗号化 <\n復号    ";
+                pos = up;
+            }
+            else if (GetAsyncKeyState(VK_DOWN) && pos == up)
+            {
+                system("cls");
+                cout << "暗号化\n復号   <";
+                pos = down;
+            }
+        }
+
+        string mode = pos == up ? "暗号化" : "復号";
+
+        getline(cin, _);
+        cout << "出力するファイルパス > ";
+        getline(cin, outFilePath);
+        cout << mode << "キー > ";
+        cin >> key;
     }
     else if (argc >= 7)
     {

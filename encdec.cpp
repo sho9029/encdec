@@ -31,36 +31,32 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     if (splitSize <= fileSize) b.reserve(splitSize);
 
     //ヘッダーの確認
-    header::_header h;
+    Header::header h;
     in.read((char*)&h, sizeof(h));
 
-    int result;
+    Header::match result;
+
     if (h.identifier[0] == IDENTIFIER[0]
         && h.identifier[1] == IDENTIFIER[1]
         && h.identifier[2] == IDENTIFIER[2])
     {
         if (h.version[0] == VERSION[0]
             && h.version[1] == VERSION[1])
-            result = header::allMatch;
+            result = Header::match::allMatch;
         else
-            result = header::identifierMatch;
+            throw exception("バージョンが違います");
     }
     else
-        result = header::noMatch;
-
-    if (result == header::identifierMatch)
-        throw exception("バージョンが違います");
-    else if (result != header::allMatch && result != header::noMatch)
-        throw exception("不明なエラー");
+        result = Header::match::noMatch;
 
     ofstream out(outFilePath, ios::trunc | ios::binary);
     if (!out) throw exception("ファイルを出力できませんでした");
 
-    if (result == header::noMatch)
+    if (result == Header::match::noMatch)
     {
         in.clear();
         in.seekg(0, ios::beg);
-        HeaderWrite(h);
+        Header::HeaderWrite(h);
         out.write((char*)&h, sizeof(h));
     }
 
@@ -108,15 +104,5 @@ void encdec::Progress(const size_t& nowSize, const size_t& maxSize)
         cout << nowSize / 1000000 << "MB / " << maxSize / 1000000 << "MB";
     else
         cout << nowSize / 1000000000 << "GB / " << maxSize / 1000000000 << "GB";
-    return;
-}
-
-void encdec::HeaderWrite(header::_header& h)
-{
-    h.identifier[0] = IDENTIFIER[0];
-    h.identifier[1] = IDENTIFIER[1];
-    h.identifier[2] = IDENTIFIER[2];
-    h.version[0] = VERSION[0];
-    h.version[1] = VERSION[1];
     return;
 }
