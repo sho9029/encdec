@@ -1,6 +1,5 @@
 #include "encdec.h"
 
-
 int encdec::Convert(string inFilePath, string outFilePath, string key)
 {
     //現在の空き物理メモリサイズを取得
@@ -15,7 +14,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     //キーをシードに疑似乱数生成
     key = random::rand(key);
     ifstream in(inFilePath, ios::binary);
-    if (!in) throw exception("ファイルを開けませんでした");
+    if (!in) throw exception("Can't open file");
     //ファイルサイズ取得
     size_t fileSize = in.seekg(0, ios::end).tellg();
     in.clear();
@@ -26,31 +25,39 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     vector<uint8_t> b, spkey;
     size_t i = 0;
     //分割済みキーをuint8_t型に変換
-    for (auto f : spkeyBuf) spkey.emplace_back(conv::stoi(f));
-    Progress(i, fileSize);
+    for (auto &f : spkeyBuf) spkey.emplace_back(conv::stoi(f));
+    PrintProgress(i, fileSize);
     if (splitSize <= fileSize) b.reserve(splitSize);
 
     //ヘッダーの確認
     Header::header h;
     in.read((char*)&h, sizeof(h));
-
     Header::match result;
 
     if (h.identifier[0] == IDENTIFIER[0]
         && h.identifier[1] == IDENTIFIER[1]
         && h.identifier[2] == IDENTIFIER[2])
     {
-        if (h.version[0] == VERSION[0]
-            && h.version[1] == VERSION[1])
-            result = Header::match::allMatch;
+        if (h.version[0] == VERSION[0])
+        {
+            result = Header::match::Match;
+            fileSize -= identifierSize + versionSize;
+        }
         else
-            throw exception("バージョンが違います");
+        {
+            throw exception("Incorrect version");
+        }
     }
     else
+    {
         result = Header::match::noMatch;
+    }
 
     ofstream out(outFilePath, ios::trunc | ios::binary);
-    if (!out) throw exception("ファイルを出力できませんでした");
+    if (!out)
+    {
+        throw exception("Can't output file");
+    }
 
     if (result == Header::match::noMatch)
     {
@@ -77,7 +84,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
             }
 
             b.clear();
-            Progress(i, fileSize);
+            PrintProgress(i, fileSize);
         }
     }
 
@@ -88,21 +95,21 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
         out.write((char*)&b[j], 1);
     }
 
-    Progress(i, fileSize);
+    PrintProgress(i, fileSize);
     out.close();
-    return 0;
+    return static_cast<int>(result);
 }
 
-void encdec::Progress(const size_t& nowSize, const size_t& maxSize)
+void encdec::PrintProgress(const size_t& nowSize, const size_t& maxSize)
 {
     cout << "\r" << flush;
-    if (maxSize < 1000000)
+    if (maxSize < 1e3)
         cout << nowSize << "B / " << maxSize << "B";
-    else if (maxSize < 10000000)
-        cout << nowSize / 1000 << "KB / " << maxSize / 1000 << "KB";
-    else if (maxSize < 10000000000)
-        cout << nowSize / 1000000 << "MB / " << maxSize / 1000000 << "MB";
+    else if (maxSize < 1e6)
+        cout << nowSize / 1e3 << "KB / " << maxSize / 1e3 << "KB";
+    else if (maxSize < 1e9)
+        cout << nowSize / 1e6 << "MB / " << maxSize / 1e6 << "MB";
     else
-        cout << nowSize / 1000000000 << "GB / " << maxSize / 1000000000 << "GB";
+        cout << nowSize / 1e9 << "GB / " << maxSize / 1e9 << "GB";
     return;
 }

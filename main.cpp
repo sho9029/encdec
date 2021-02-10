@@ -1,26 +1,19 @@
 ﻿#include "pch.h"
 #include "encdec.h"
 
-enum selectPos
+enum arg
 {
-    up,
-    down
-};
-
-enum area
-{
-    area_i,
-    area_o,
-    area_k
+    arg_i,
+    arg_o,
+    arg_k
 };
 
 int main(int argc, char **argv)
 {
     string inFilePath, outFilePath, key, _;
     vector<string> args(argv, argv + argc);
-    int pos = up;
 
-    if (argc == 2 && (args[1] == "--help" || args[1] == "help" || args[1] == "?"))
+    if (argc == 2 && (args[1] == "--help" || args[1] == "-h" || args[1] == "-?"))
     {
         cout << "\nUsage: encdec.exe [-i input file path] [-o output file path] [-k key]"
                 "\n\nor run without arguments";
@@ -28,37 +21,15 @@ int main(int argc, char **argv)
     else if (argc == 2)
     {
         inFilePath = args[1];
-        cout << "暗号化 <\n復号    ";
 
-        while (1)
-        {
-            if (GetAsyncKeyState(VK_RETURN)) break;
-            if (GetAsyncKeyState(VK_UP) && pos == down)
-            {
-                system("cls");
-                cout << "暗号化 <\n復号    ";
-                pos = up;
-            }
-            else if (GetAsyncKeyState(VK_DOWN) && pos == up)
-            {
-                system("cls");
-                cout << "暗号化\n復号   <";
-                pos = down;
-            }
-        }
-
-        string mode = pos == up ? "暗号化" : "復号";
-
-        getline(cin, _);
-        cout << "出力するファイルパス > ";
+        cout << "output file path > ";
         getline(cin, outFilePath);
-        cout << mode << "キー > ";
-        cin >> key;
+        cout << "key > ";
+        getline(cin, key);
     }
     else if (argc >= 7)
     {
-        int area = -1;
-        bool space = false;
+        int arg = -1;
 
         struct requirements
         {
@@ -71,36 +42,30 @@ int main(int argc, char **argv)
         {
             if (args[i] == "-i")
             {
-                space = false;
-                area = area_i;
+                arg = arg_i;
                 req.inFilePath = true;
             }
             else if (args[i] == "-o")
             {
-                space = false;
-                area = area_o;
+                arg = arg_o;
                 req.outFilePath = true;
             }
             else if (args[i] == "-k")
             {
-                space = false;
-                area = area_k;
+                arg = arg_k;
                 req.key = true;
             }
             else
             {
-                switch (area)
+                switch (arg)
                 {
-                case area_i:
-                    inFilePath = (space ? " " : "");
+                case arg_i:
                     inFilePath += args[i];
                     break;
-                case area_o:
-                    outFilePath = (space ? " " : "");
+                case arg_o:
                     outFilePath += args[i];
                     break;
-                case area_k:
-                    key = (space ? " " : "");
+                case arg_k:
                     key += args[i];
                     break;
                 default:
@@ -111,45 +76,23 @@ int main(int argc, char **argv)
 
         if (!(req.inFilePath && req.outFilePath && req.key))
         {
-            cout << "正しくない引数です" << endl;
+            cout << "Incorrect argument" << endl;
             system("pause");
             return -1;
         }
     }
     else if (argc == 1)
     {
-        cout << "暗号化 <\n復号    ";
-
-        while (1)
-        {
-            if (GetAsyncKeyState(VK_RETURN)) break;
-            if (GetAsyncKeyState(VK_UP) && pos == down)
-            {
-                system("cls");
-                cout << "暗号化 <\n復号    ";
-                pos = up;
-            }
-            else if (GetAsyncKeyState(VK_DOWN) && pos == up)
-            {
-                system("cls");
-                cout << "暗号化\n復号   <";
-                pos = down;
-            }
-        }
-
-        string mode = pos == up ? "暗号化" : "復号";
-
-        getline(cin, _);
-        cout << endl << mode << "するファイルパス > ";
+        cout << "Input file path > ";
         getline(cin, inFilePath);
-        cout << "出力するファイルパス > ";
+        cout << "Output file path > ";
         getline(cin, outFilePath);
-        cout << mode << "キー > ";
-        cin >> key;
+        cout << "Key > ";
+        getline(cin, key);
     }
     else
     {
-        cout << "正しくない引数です" << endl;
+        cout << "Incorrect argument" << endl;
         system("pause");
         return -1;
     }
@@ -165,7 +108,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    cout << endl << "処理が終了しました" << endl;
+    cout << endl << "The process is completed" << endl;
     system("pause");
     return 0;
 }

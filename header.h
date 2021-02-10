@@ -6,8 +6,7 @@ class Header
 public:
 	enum class match
 	{
-		allMatch = 0,
-		identifierMatch = 1,
+		Match = 0,
 		noMatch = -1
 	};
 
