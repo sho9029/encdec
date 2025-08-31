@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include <cstring>
 
 class Header
 {
@@ -17,7 +18,8 @@ public:
 
 		bool operator ==(const header& a) const
 		{
-			return a.identifier == this->identifier && a.version == this->version;
+			return memcmp(identifier, a.identifier, identifierSize) == 0 &&
+				   memcmp(version, a.version, versionSize) == 0;
 		}
 	};
 
@@ -29,4 +31,3 @@ public:
 			h.version[i] = VERSION[i];
 	}
 };
-
