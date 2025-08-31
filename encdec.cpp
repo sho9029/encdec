@@ -21,6 +21,9 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     in.seekg(0, ios::beg);
     //1バイトごとにキーを分割
     auto [spkeyBuf, spkeySize] = conv::split(key, 2);
+    if (spkeySize == 0) {
+        throw exception("Invalid key: cannot split into parts");
+    }
     uint8_t a;
     vector<uint8_t> b, spkey;
     size_t i = 0;
@@ -71,7 +74,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     {
         in.read((char*)&a, 1);
         if (in.eof()) break;
-        
+
         a ^= spkey[i % spkeySize];
         ++i;
         b.emplace_back(a);
