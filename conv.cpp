@@ -129,7 +129,7 @@ tuple<vector<string>, unsigned long long> conv::split(const string& a, const uns
     {
         buf = "";
 
-        for (unsigned long long j = 0; j < b; j++)
+        for (unsigned long long j = 0; j < b && i + j < size; j++)
         {
             buf += a[i + j];
         }
