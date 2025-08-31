@@ -110,6 +110,10 @@ void conv::StringToBinary(string& a)
 
 uint8_t conv::stoi(const string& a)
 {
+    if (a.empty()) {
+        throw exception("Empty string cannot be converted to number");
+    }
+
     uint8_t z = 0;
 
     for (auto f : a)
