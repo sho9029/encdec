@@ -12,15 +12,15 @@ namespace legacy {
         static void Decrypt(std::ifstream& in, std::ofstream& out, std::string key, size_t fileSize);
 
     private:
-        // v1.3 当時の疑似乱数生成ロジック
+        // v1.3 疑似乱数生成ロジック
         static std::string rand(const std::string& a);
         static uint64_t stoiorder(const std::string& a);
         static std::string randjoin(const std::string& a);
         
-        // 進捗表示（当時の仕様を維持）
+        // 進捗表示
         static void PrintProgress(const size_t& nowSize, const size_t& maxSize);
 
-        // 内部ユーティリティ（旧 conv から移植）
+        // 内部ユーティリティ
         static uint8_t stoi(const std::string& a);
         static std::tuple<std::vector<std::string>, unsigned long long> split(const std::string& a, const unsigned long long& b);
     };

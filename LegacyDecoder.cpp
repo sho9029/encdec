@@ -8,7 +8,7 @@
 namespace legacy {
 
 void v1_3::Decrypt(std::ifstream& in, std::ofstream& out, std::string key, size_t fileSize) {
-    // 1. 当時の疑似乱数生成
+    // 1. 疑似乱数生成
     key = rand(key);
 
     // 2. 鍵の分割と変換
@@ -22,7 +22,7 @@ void v1_3::Decrypt(std::ifstream& in, std::ofstream& out, std::string key, size_
     uint8_t a;
     std::vector<uint8_t> buffer;
     size_t processedSize = 0;
-    size_t splitSize = 1024 * 1024 * 10; // デフォルト10MB（当時の動的割当は簡略化）
+    size_t splitSize = 1024 * 1024 * 10; // デフォルト10MB
 
     buffer.reserve(splitSize);
 
