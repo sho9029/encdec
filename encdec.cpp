@@ -69,7 +69,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     // 復号時はフッター分を除いたサイズを処理
     size_t dataSize = isEncrypted ? (fileSize - sizeof(uint64_t)) : fileSize;
 
-    // メモリ効率を考慮しつつ、パフォーマンスのために小規模なバッファリングを行う
+    // バッファリング
     const size_t internalBufSize = 64 * 1024; // 64KB
     vector<uint8_t> buf;
     buf.reserve(internalBufSize);
@@ -94,7 +94,10 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
         if (buf.size() >= internalBufSize) {
             out.write((char*)buf.data(), buf.size());
             buf.clear();
-            PrintProgress(processed, dataSize);
+            // Show progress every 1MB to avoid excessive stdout pressure
+            if (processed % (1024 * 1024) < internalBufSize) {
+                PrintProgress(processed, dataSize);
+            }
         }
     }
     if (!buf.empty()) {
