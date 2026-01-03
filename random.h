@@ -1,13 +1,40 @@
 #pragma once
 #include "pch.h"
-#include "conv.h"
+#include <vector>
+#include <string>
 
 class random
 {
 public:
-    static string rand(const string&);
-    static uint64_t stoiorder(const string&);
-private:
-    static string randjoin(const string&);
-};
+    // v2.0 オンザフライ生成エンジン
+    class Engine {
+    public:
+        Engine(const std::string& key);
+        
+        // 指定した位置におけるキーストリームの1バイトを取得
+        uint8_t GetNextByte(uint64_t position);
 
+        // 整合性検証用ハッシュの更新
+        void UpdateIntegrity(uint8_t byte);
+        // 現在の整合性ハッシュを取得
+        uint64_t GetIntegrityHash();
+
+    private:
+        // 内部ステート（広帯域：鍵の長さに応じて可変、最低512bit）
+        std::vector<uint64_t> state;
+        
+        // 整合性検証用ハッシュ
+        uint64_t integrityState = 0;
+
+        // 撹乱用のソルト（大域的な位置依存性を持たせるため）
+        uint64_t globalSalt;
+
+        // ステートをかき混ぜる内部関数 (ARXアーキテクチャ)
+        void MixState(uint64_t mixVal);
+
+        // ビット回転 (Circular Shift)
+        inline uint64_t ROTL(uint64_t x, int n) {
+            return (x << n) | (x >> (64 - n));
+        }
+    };
+};

@@ -111,6 +111,6 @@ constexpr uint8_t IDENTIFIER[identifierSize]= { 0x45, 0x44, 0xff };
 
 //version
 constexpr size_t versionSize = 2;
-constexpr uint8_t MAJOR = 1;
-constexpr uint8_t MINOR = 3;
+constexpr uint8_t MAJOR = 2;
+constexpr uint8_t MINOR = 0;
 constexpr uint8_t VERSION[versionSize] = { MAJOR, MINOR };

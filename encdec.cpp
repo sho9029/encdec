@@ -1,106 +1,125 @@
 #include "encdec.h"
+#include "LegacyDecoder.h"
+#include "random.h"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 int encdec::Convert(string inFilePath, string outFilePath, string key)
 {
-    //現在の空き物理メモリサイズを取得
-    MEMORYSTATUSEX memoryBuf;
-    memoryBuf.dwLength = sizeof(memoryBuf);
-    GlobalMemoryStatusEx(&memoryBuf);
-    auto memoryFreeSize = memoryBuf.ullAvailPhys;
-
-    //現在の空き物理メモリサイズの80%をプログラムによる使用上限に設定
-    if (memoryFreeSize <= splitSize) splitSize = static_cast<size_t>(memoryFreeSize * 0.8);
-
-    //キーをシードに疑似乱数生成
-    key = random::rand(key);
+    // 1. ファイルオープン
+    if (!fs::exists(inFilePath)) throw exception(("Input file not found: " + inFilePath).c_str());
+    if (fs::is_directory(inFilePath)) throw exception("The input path is a directory, not a file.");
+    
     ifstream in(inFilePath, ios::binary);
-    if (!in) throw exception("Can't open file");
-    //ファイルサイズ取得
-    size_t fileSize = in.seekg(0, ios::end).tellg();
-    in.clear();
-    in.seekg(0, ios::beg);
-    //1バイトごとにキーを分割
-    auto [spkeyBuf, spkeySize] = conv::split(key, 2);
-    if (spkeySize == 0) {
-        throw exception("Invalid key: cannot split into parts");
-    }
-    uint8_t a;
-    vector<uint8_t> b, spkey;
-    size_t i = 0;
-    //分割済みキーをuint8_t型に変換
-    for (auto &f : spkeyBuf) spkey.emplace_back(conv::stoi(f));
-    PrintProgress(i, fileSize);
-    if (splitSize <= fileSize) b.reserve(splitSize);
+    if (!in) throw exception("Access denied or file is locked by another process.");
 
-    //ヘッダーの確認
+    // 2. ヘッダーの確認 (5 bytes)
     Header::header h;
     in.read((char*)&h, sizeof(h));
-    Header::match result;
-
-    if (h.identifier[0] == IDENTIFIER[0]
-        && h.identifier[1] == IDENTIFIER[1]
-        && h.identifier[2] == IDENTIFIER[2])
+    
+    bool isEncrypted = false;
+    if (in.gcount() == sizeof(h) && 
+        h.identifier[0] == IDENTIFIER[0] && 
+        h.identifier[1] == IDENTIFIER[1] && 
+        h.identifier[2] == IDENTIFIER[2]) 
     {
-        if (h.version[0] == VERSION[0])
-        {
-            result = Header::match::Match;
-            fileSize -= identifierSize + versionSize;
-        }
-        else
-        {
-            throw exception("Incorrect version");
-        }
-    }
-    else
-    {
-        result = Header::match::noMatch;
+        isEncrypted = true;
     }
 
+    // 3. 出力ファイルの準備
+    if (fs::exists(outFilePath) && fs::is_directory(outFilePath)) throw exception("The output path is a directory.");
+    
     ofstream out(outFilePath, ios::trunc | ios::binary);
-    if (!out)
-    {
-        throw exception("Can't output file");
-    }
+    if (!out) throw exception("Failed to create output file. Check permissions or if the disk is full.");
 
-    if (result == Header::match::noMatch)
-    {
-        in.clear();
+    // 4. バージョン判定とルーティング
+    size_t fileSize = in.seekg(0, ios::end).tellg();
+    in.clear();
+
+    if (isEncrypted) {
+        if (h.version[0] == 1 && h.version[1] == 3) {
+            // --- v1.3 後方互換復号 ---
+            in.seekg(sizeof(h), ios::beg);
+            legacy::v1_3::Decrypt(in, out, key, fileSize - sizeof(h));
+            return static_cast<int>(Header::match::Match);
+        } 
+        else if (h.version[0] == MAJOR && h.version[1] == MINOR) {
+            // --- v2.0 最新復号 ---
+            in.seekg(sizeof(h), ios::beg);
+            fileSize -= sizeof(h);
+        } 
+        else {
+            string ver = to_string((int)h.version[0]) + "." + to_string((int)h.version[1]);
+            throw exception(("The file version (" + ver + ") is not supported by this tool.").c_str());
+        }
+    } 
+    else {
+        // --- v2.0 新規暗号化 ---
         in.seekg(0, ios::beg);
         Header::HeaderWrite(h);
         out.write((char*)&h, sizeof(h));
     }
 
-    while (!in.eof())
-    {
+    // 5. v2.0 コアループ (オンザフライ・ビット撹乱エンジン)
+    random::Engine engine(key);
+    uint8_t a;
+    size_t processed = 0;
+    
+    // 復号時はフッター分を除いたサイズを処理
+    size_t dataSize = isEncrypted ? (fileSize - sizeof(uint64_t)) : fileSize;
+
+    // メモリ効率を考慮しつつ、パフォーマンスのために小規模なバッファリングを行う
+    const size_t internalBufSize = 64 * 1024; // 64KB
+    vector<uint8_t> buf;
+    buf.reserve(internalBufSize);
+
+    while (processed < dataSize && !in.eof()) {
         in.read((char*)&a, 1);
         if (in.eof()) break;
 
-        a ^= spkey[i % spkeySize];
-        ++i;
-        b.emplace_back(a);
+        uint8_t plaintext;
+        if (!isEncrypted) {
+            plaintext = a;
+            a ^= engine.GetNextByte(processed); // 暗号化
+        } else {
+            a ^= engine.GetNextByte(processed); // 復号
+            plaintext = a;
+        }
 
-        if (i % splitSize == 0 && splitSize <= i)
-        {
-            for (size_t j = 0; j < splitSize; ++j)
-            {
-                out.write((char*)&b[j], 1);
-            }
+        engine.UpdateIntegrity(plaintext);
+        processed++;
+        buf.push_back(a);
 
-            b.clear();
-            PrintProgress(i, fileSize);
+        if (buf.size() >= internalBufSize) {
+            out.write((char*)buf.data(), buf.size());
+            buf.clear();
+            PrintProgress(processed, dataSize);
+        }
+    }
+    if (!buf.empty()) {
+        out.write((char*)buf.data(), buf.size());
+    }
+    
+    // 6. 整合性検証・フッター処理
+    if (!isEncrypted) {
+        // 暗号化時：フッター（ハッシュ）を書き込む
+        uint64_t hash = engine.GetIntegrityHash();
+        out.write((char*)&hash, sizeof(hash));
+    } else {
+        // 復号時：フッターを読み込んで計算値と比較
+        uint64_t storedHash;
+        in.read((char*)&storedHash, sizeof(storedHash));
+        if (storedHash != engine.GetIntegrityHash()) {
+            throw exception("Decryption failed. Cause: The key is incorrect OR the file data has been tampered with.");
         }
     }
 
+    PrintProgress(processed, dataSize);
     in.close();
-
-    for (size_t j = 0, size = b.size(); j < size; ++j)
-    {
-        out.write((char*)&b[j], 1);
-    }
-
-    PrintProgress(i, fileSize);
     out.close();
-    return static_cast<int>(result);
+
+    return 0; // Success
 }
 
 void encdec::PrintProgress(const size_t& nowSize, const size_t& maxSize)
