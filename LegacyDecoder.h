@@ -1,6 +1,8 @@
 #pragma once
 #include "pch.h"
-#include "conv.h"
+#include <vector>
+#include <string>
+#include <tuple>
 
 namespace legacy {
     class v1_3 {
@@ -17,5 +19,9 @@ namespace legacy {
         
         // 進捗表示（当時の仕様を維持）
         static void PrintProgress(const size_t& nowSize, const size_t& maxSize);
+
+        // 内部ユーティリティ（旧 conv から移植）
+        static uint8_t stoi(const std::string& a);
+        static std::tuple<std::vector<std::string>, unsigned long long> split(const std::string& a, const unsigned long long& b);
     };
 }

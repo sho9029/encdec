@@ -19,14 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="conv.cpp" />
     <ClCompile Include="encdec.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="random.cpp" />
     <ClCompile Include="LegacyDecoder.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="conv.h" />
     <ClInclude Include="encdec.h" />
     <ClInclude Include="header.h" />
     <ClInclude Include="pch.h" />

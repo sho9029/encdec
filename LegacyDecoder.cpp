@@ -1,5 +1,9 @@
 #include "LegacyDecoder.h"
 #include <cmath>
+#include <vector>
+#include <string>
+#include <tuple>
+#include <exception>
 
 namespace legacy {
 
@@ -8,11 +12,11 @@ void v1_3::Decrypt(std::ifstream& in, std::ofstream& out, std::string key, size_
     key = rand(key);
 
     // 2. 鍵の分割と変換
-    auto [spkeyBuf, spkeySize] = conv::split(key, 2);
+    auto [spkeyBuf, spkeySize] = split(key, 2);
     if (spkeySize == 0) throw std::exception("Legacy: Invalid key");
 
     std::vector<uint8_t> spkey;
-    for (auto& f : spkeyBuf) spkey.emplace_back(conv::stoi(f));
+    for (auto& f : spkeyBuf) spkey.emplace_back(stoi(f));
 
     // 3. XORループ（固定長バッファ方式）
     uint8_t a;
@@ -178,6 +182,30 @@ void v1_3::PrintProgress(const size_t& nowSize, const size_t& maxSize) {
     else if (maxSize < 1e6) std::cout << nowSize / 1e3 << "KB / " << maxSize / 1e3 << "KB";
     else if (maxSize < 1e9) std::cout << nowSize / 1e6 << "MB / " << maxSize / 1e6 << "MB";
     else std::cout << nowSize / 1e9 << "GB / " << maxSize / 1e9 << "GB";
+}
+
+uint8_t v1_3::stoi(const std::string& a) {
+    if (a.empty()) {
+        throw std::exception("Empty string cannot be converted to number");
+    }
+    uint8_t z = 0;
+    for (auto f : a) {
+        z = 10 * z + (f - '0');
+    }
+    return z;
+}
+
+std::tuple<std::vector<std::string>, unsigned long long> v1_3::split(const std::string& a, const unsigned long long& b) {
+    std::vector<std::string> z;
+    std::string buf;
+    for (unsigned long long i = 0, size = a.size(); i < size; i += b) {
+        buf = "";
+        for (unsigned long long j = 0; j < b && i + j < size; j++) {
+            buf += a[i + j];
+        }
+        z.emplace_back(buf);
+    }
+    return { z, z.size() };
 }
 
 } // namespace legacy
