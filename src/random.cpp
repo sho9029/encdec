@@ -1,6 +1,6 @@
 #include "random.h"
 
-random::Engine::Engine(const std::string& key) {
+void random::Engine::Init(const std::string& key) {
     // 1. ステートの初期化
     // 鍵の全情報を保持するため、鍵の長さに応じた可変長ステートを採用（最低512bit / 8 * uint64_t）
     size_t stateSize = (key.length() / 8) + 1;
@@ -12,8 +12,29 @@ random::Engine::Engine(const std::string& key) {
         state[i % stateSize] ^= (static_cast<uint64_t>(key[i]) << ((i % 8) * 8));
         MixState(state[i % stateSize]);
     }
-    
+}
+
+random::Engine::Engine(const std::string& key) {
+    Init(key);
     globalSalt = 0xDEADBEEFCAFEBABEULL;
+}
+
+random::Engine::Engine(const std::string& key, const std::vector<uint8_t>& iv) {
+    Init(key);
+    
+    // IVをglobalSaltとして使用（128bit以上ある場合はハッシュ化して縮約するか、MixStateで混ぜ込む）
+    // 今回は簡易的にIVの最初の8バイトと次の8バイトをXORして64bit saltにする
+    // 本来は128bit以上のIVをフル活用すべきだが、現状のアーキテクチャ(64bit salt)に合わせて縮約する
+    uint64_t ivPart1 = 0, ivPart2 = 0;
+    if (iv.size() >= 16) {
+        memcpy(&ivPart1, iv.data(), 8);
+        memcpy(&ivPart2, iv.data() + 8, 8);
+    }
+    globalSalt = ivPart1 ^ ivPart2;
+    
+    // さらにIV全体をStateにMixする
+    MixState(ivPart1);
+    MixState(ivPart2);
 }
 
 void random::Engine::MixState(uint64_t mixVal) {

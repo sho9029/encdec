@@ -10,6 +10,7 @@ public:
     class Engine {
     public:
         Engine(const std::string& key);
+        Engine(const std::string& key, const std::vector<uint8_t>& iv);
         
         // 指定した位置におけるキーストリームの1バイトを取得
         uint8_t GetNextByte(uint64_t position);
@@ -31,6 +32,9 @@ public:
 
         // ステートをかき混ぜる内部関数 (ARXアーキテクチャ)
         void MixState(uint64_t mixVal);
+
+        // 共通初期化処理
+        void Init(const std::string& key);
 
         // ビット回転 (Circular Shift)
         inline uint64_t ROTL(uint64_t x, int n) {
