@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "encdec.h"
 #include <filesystem>
 
@@ -64,9 +64,18 @@ int main(int argc, char **argv)
             {
                 switch (arg)
                 {
-                case arg_i: inFilePath += args[i]; break;
-                case arg_o: outFilePath += args[i]; break;
-                case arg_k: key += args[i]; break;
+                case arg_i: 
+                    if (!inFilePath.empty()) inFilePath += " ";
+                    inFilePath += args[i]; 
+                    break;
+                case arg_o: 
+                    if (!outFilePath.empty()) outFilePath += " ";
+                    outFilePath += args[i]; 
+                    break;
+                case arg_k: 
+                    if (!key.empty()) key += " ";
+                    key += args[i]; 
+                    break;
                 }
             }
         }
