@@ -99,7 +99,6 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
     unique_ptr<random::Engine> engine(enginePtr);
 
     // 5. コアループ (オンザフライ・ビット撹乱エンジン)
-    uint8_t a;
     size_t processed = 0;
     
     // 復号時はフッター分を除いたサイズを処理
@@ -107,37 +106,41 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
 
     // バッファリング
     const size_t internalBufSize = 64 * 1024; // 64KB
-    vector<uint8_t> buf;
-    buf.reserve(internalBufSize);
+    vector<char> inBuf(internalBufSize);
+    vector<char> outBuf;
+    outBuf.reserve(internalBufSize);
 
     while (processed < dataSize && !in.eof()) {
-        in.read((char*)&a, 1);
-        if (in.eof()) break;
+        size_t toRead = min(internalBufSize, dataSize - processed);
+        in.read(inBuf.data(), toRead);
+        size_t readLen = in.gcount();
+        if (readLen == 0) break;
 
-        uint8_t plaintext;
-        if (!isEncrypted) {
-            plaintext = a;
-            a ^= engine->GetNextByte(processed); // 暗号化
-        } else {
-            a ^= engine->GetNextByte(processed); // 復号
-            plaintext = a;
-        }
-
-        engine->UpdateIntegrity(plaintext);
-        processed++;
-        buf.push_back(a);
-
-        if (buf.size() >= internalBufSize) {
-            out.write((char*)buf.data(), buf.size());
-            buf.clear();
-            // Show progress every 1MB to avoid excessive stdout pressure
-            if (processed % (1024 * 1024) < internalBufSize) {
-                PrintProgress(processed, dataSize);
+        for (size_t i = 0; i < readLen; ++i) {
+            uint8_t a = static_cast<uint8_t>(inBuf[i]);
+            uint8_t plaintext;
+            if (!isEncrypted) {
+                plaintext = a;
+                a ^= engine->GetNextByte(processed); // 暗号化
+            } else {
+                a ^= engine->GetNextByte(processed); // 復号
+                plaintext = a;
             }
+
+            engine->UpdateIntegrity(plaintext);
+            processed++;
+            outBuf.push_back(static_cast<char>(a));
         }
-    }
-    if (!buf.empty()) {
-        out.write((char*)buf.data(), buf.size());
+
+        if (!outBuf.empty()) {
+            out.write(outBuf.data(), outBuf.size());
+            outBuf.clear();
+        }
+
+        // Show progress every 1MB to avoid excessive stdout pressure
+        if (processed % (1024 * 1024) < readLen) {
+            PrintProgress(processed, dataSize);
+        }
     }
     
     // 6. 整合性検証・フッター処理
