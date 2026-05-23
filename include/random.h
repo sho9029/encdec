@@ -6,11 +6,12 @@
 class random
 {
 public:
-    // v2.0 オンザフライ生成エンジン
+    // v2.2 ブロック方式キーストリーム生成エンジン
     class Engine {
     public:
-        Engine(const std::string& key);
-        Engine(const std::string& key, const std::vector<uint8_t>& iv);
+        Engine(const std::string& key, bool legacyAlgorithm = false);
+        Engine(const std::string& key, const std::vector<uint8_t>& iv,
+               bool legacyAlgorithm = false);
         
         // 指定した位置におけるキーストリームの1バイトを取得
         uint8_t GetNextByte(uint64_t position);
@@ -30,6 +31,9 @@ public:
         // 撹乱用のソルト（大域的な位置依存性を持たせるため）
         uint64_t globalSalt;
 
+        // v2.0/v2.1 の既存ファイルを読むときだけ旧方式を使用する
+        bool legacyAlgorithm = false;
+
         // ステートをかき混ぜる内部関数 (ARXアーキテクチャ)
         void MixState(uint64_t mixVal);
 
@@ -40,5 +44,10 @@ public:
         inline uint64_t ROTL(uint64_t x, int n) {
             return (x << n) | (x >> (64 - n));
         }
+
+        // ブロックバッファ方式用の追加メンバ
+        std::vector<uint8_t> keyStreamBuffer;
+        uint64_t currentBlockIndex = 0xFFFFFFFFFFFFFFFFULL;
+        void GenerateBlock(uint64_t blockIndex);
     };
 };

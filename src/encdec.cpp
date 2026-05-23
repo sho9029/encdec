@@ -53,10 +53,20 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
             // --- v2.0 レガシー復号 (IVなし) ---
             in.seekg(sizeof(h), ios::beg);
             fileSize -= sizeof(h);
-            enginePtr = new random::Engine(key); // v2.0用初期化
+            enginePtr = new random::Engine(key, true); // v2.0用初期化
+        }
+        else if (h.version[0] == 2 && h.version[1] == 1) {
+            // --- v2.1 レガシー復号 (IVあり) ---
+            in.seekg(sizeof(h), ios::beg);
+
+            iv.resize(IV_SIZE);
+            in.read((char*)iv.data(), IV_SIZE);
+
+            fileSize -= (sizeof(h) + IV_SIZE);
+            enginePtr = new random::Engine(key, iv, true); // v2.1用初期化
         }
         else if (h.version[0] == MAJOR && h.version[1] == MINOR) {
-            // --- v2.1 最新復号 (IVあり) ---
+            // --- v2.2 最新復号 (IVあり) ---
             in.seekg(sizeof(h), ios::beg);
             
             // IV読み込み
@@ -64,7 +74,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
             in.read((char*)iv.data(), IV_SIZE);
             
             fileSize -= (sizeof(h) + IV_SIZE);
-            enginePtr = new random::Engine(key, iv); // v2.1用初期化
+            enginePtr = new random::Engine(key, iv); // v2.2用初期化
         } 
         else {
             string ver = to_string((int)h.version[0]) + "." + to_string((int)h.version[1]);
@@ -72,7 +82,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
         }
     } 
     else {
-        // --- v2.1 新規暗号化 ---
+        // --- v2.2 新規暗号化 ---
         in.seekg(0, ios::beg);
         Header::HeaderWrite(h);
         out.write((char*)&h, sizeof(h));
@@ -92,7 +102,7 @@ int encdec::Convert(string inFilePath, string outFilePath, string key)
         
         out.write((char*)iv.data(), IV_SIZE);
         
-        enginePtr = new random::Engine(key, iv); // v2.1用初期化
+        enginePtr = new random::Engine(key, iv); // v2.2用初期化
     }
 
     // Smart pointer would be better, but sticking to manual management to match existing style broadly

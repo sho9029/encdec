@@ -14,12 +14,15 @@ void random::Engine::Init(const std::string& key) {
     }
 }
 
-random::Engine::Engine(const std::string& key) {
+random::Engine::Engine(const std::string& key, bool legacyAlgorithm)
+    : legacyAlgorithm(legacyAlgorithm) {
     Init(key);
     globalSalt = 0xDEADBEEFCAFEBABEULL;
 }
 
-random::Engine::Engine(const std::string& key, const std::vector<uint8_t>& iv) {
+random::Engine::Engine(const std::string& key, const std::vector<uint8_t>& iv,
+                      bool legacyAlgorithm)
+    : legacyAlgorithm(legacyAlgorithm) {
     Init(key);
     
     // IVをglobalSaltとして使用（128bit以上ある場合はハッシュ化して縮約するか、MixStateで混ぜ込む）
@@ -51,15 +54,42 @@ void random::Engine::MixState(uint64_t mixVal) {
     }
 }
 
-uint8_t random::Engine::GetNextByte(uint64_t position) {
-    // 大域的な位置情報を用いた動的撹乱（オンザフライ生成）
-    // position が変わるたびにステートが進化するため、周期性が消失する
-    MixState(position ^ globalSalt);
+void random::Engine::GenerateBlock(uint64_t blockIndex) {
+    size_t blockSize = state.size() * 8;
+    keyStreamBuffer.resize(blockSize);
+
+    // ブロック開始位置のオフセットを利用してステートを撹乱
+    uint64_t blockStartOffset = blockIndex * blockSize;
+    MixState(blockStartOffset ^ globalSalt);
+
+    // かき混ぜられたステート全体からバイト列をバッファに抽出
+    for (size_t i = 0; i < state.size(); ++i) {
+        uint64_t val = state[i];
+        for (int j = 0; j < 8; ++j) {
+            keyStreamBuffer[i * 8 + j] = static_cast<uint8_t>((val >> (j * 8)) & 0xFF);
+        }
+    }
     
-    // ステートから1バイトを抽出
-    uint64_t out = state[position % state.size()];
-    // 折り畳みによるエントロピーの抽出
-    return (uint8_t)((out ^ (out >> 32)) & 0xFF);
+    currentBlockIndex = blockIndex;
+}
+
+uint8_t random::Engine::GetNextByte(uint64_t position) {
+    if (legacyAlgorithm) {
+        // v2.0/v2.1 の旧方式: 位置ごとにステートを更新して1バイト生成する
+        MixState(position ^ globalSalt);
+        uint64_t out = state[position % state.size()];
+        return static_cast<uint8_t>((out ^ (out >> 32)) & 0xFF);
+    }
+
+    size_t blockSize = state.size() * 8;
+    uint64_t blockIndex = position / blockSize;
+    size_t offset = position % blockSize;
+
+    if (blockIndex != currentBlockIndex) {
+        GenerateBlock(blockIndex);
+    }
+
+    return keyStreamBuffer[offset];
 }
 
 void random::Engine::UpdateIntegrity(uint8_t byte) {
