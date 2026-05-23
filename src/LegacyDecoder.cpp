@@ -47,15 +47,16 @@ void v1_3::Decrypt(std::ifstream& in, std::ofstream& out, std::string key, size_
 
 std::string v1_3::rand(const std::string& a) {
     std::string z;
-    uint64_t sum = 0, temp;
-    temp = stoiorder(a);
+    uint64_t temp = stoiorder(a);
 
-    for (uint8_t i = 0; temp > 0; i++) {
-        sum += (temp % 2) * static_cast<uint64_t>(std::pow(10, i));
-        temp /= 2;
+    if (temp == 0) {
+        z = "0";
+    } else {
+        while (temp > 0) {
+            z = ((temp % 2) ? "1" : "0") + z;
+            temp /= 2;
+        }
     }
-
-    z = std::to_string(sum);
 
     if (z.size() != a.size() * 8) {
         while (z.size() < a.size() * 8) z += randjoin(z);
